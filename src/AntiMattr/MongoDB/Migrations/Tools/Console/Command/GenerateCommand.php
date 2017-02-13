@@ -23,6 +23,42 @@ class GenerateCommand extends AbstractCommand
 {
     const NAME = 'mongodb:migrations:generate';
 
+    protected $up = null;
+
+    protected $down = null;
+
+    /**
+     * @return null|string
+     */
+    public function getUp()
+    {
+        return $this->up;
+    }
+
+    /**
+     * @param string $up
+     */
+    public function setUp($up)
+    {
+        $this->up = $up;
+    }
+
+    /**
+     * @return null|string
+     */
+    public function getDown()
+    {
+        return $this->down;
+    }
+
+    /**
+     * @param string $down
+     */
+    public function setDown($down)
+    {
+        $this->down = $down;
+    }
+
     private static $_template =
             '<?php
 
@@ -64,6 +100,8 @@ class Version<version> extends AbstractMigration
                 ->setName($this->getName())
                 ->setDescription('Generate a blank migration class.')
                 ->addOption('editor-cmd', null, InputOption::VALUE_OPTIONAL, 'Open file with this command upon creation.')
+                ->addOption('up-template', null, InputOption::VALUE_OPTIONAL, 'Template file for up function.')
+                ->addOption('down-template', null, InputOption::VALUE_OPTIONAL, 'Template file for down function.')
                 ->setHelp(<<<EOT
 The <info>%command.name%</info> command generates a blank migration class:
 
@@ -87,7 +125,8 @@ EOT
         $configuration = $this->getMigrationConfiguration($input, $output);
 
         $version = $this->getVersionString();
-        $path = $this->generateMigration($configuration, $input, $version);
+        $this->configureUpDownFunction($input);
+        $path = $this->generateMigration($configuration, $input, $version, $this->getUp(), $this->getDown());
 
         $output->writeln(sprintf('Generated new migration class to "<info>%s</info>"', $path));
     }
@@ -188,5 +227,32 @@ EOT
     public function getName()
     {
         return self::NAME;
+    }
+
+    /**
+     * @param InputInterface $input
+     */
+    protected function configureUpDownFunction(InputInterface $input)
+    {
+        $this->setUp($this->getTemplateFile($input->getOption('up-template')));
+        $this->setDown($this->getTemplateFile($input->getOption('down-template')));
+    }
+
+    /**
+     * @param string $templateFile
+     *
+     * @return null|string
+     */
+    protected function getTemplateFile($templateFile)
+    {
+        if (empty($templateFile)) {
+            return null;
+        }
+        if (!file_exists($templateFile)) {
+            throw new \InvalidArgumentException("{$templateFile} is not a valid file.");
+        }
+        ob_start();
+        include $templateFile;
+        return ob_get_clean();
     }
 }
