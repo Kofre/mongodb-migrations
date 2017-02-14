@@ -1,0 +1,5 @@
+$collectionName = 'simple_<?php echo 1; ?>';
+$collection  = $db->selectCollection($collectionName);
+$this->analyze($collection);
+$collection->ensureIndex(['pk' => ['cpf' => <?php echo 1; ?>]]);
+$collection->insert(['name'=>'Giant Factory','age'=><?php echo (20+5); ?>]);

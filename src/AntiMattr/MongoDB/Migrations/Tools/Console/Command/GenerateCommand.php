@@ -123,11 +123,9 @@ EOT
     public function execute(InputInterface $input, OutputInterface $output)
     {
         $configuration = $this->getMigrationConfiguration($input, $output);
-
         $version = $this->getVersionString();
         $this->configureUpDownFunction($input);
         $path = $this->generateMigration($configuration, $input, $version, $this->getUp(), $this->getDown());
-
         $output->writeln(sprintf('Generated new migration class to "<info>%s</info>"', $path));
     }
 
@@ -245,6 +243,7 @@ EOT
      */
     protected function getTemplateFile($templateFile)
     {
+        var_dump($templateFile); exit();
         if (empty($templateFile)) {
             return null;
         }
