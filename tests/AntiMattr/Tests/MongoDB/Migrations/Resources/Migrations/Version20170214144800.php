@@ -8,14 +8,14 @@ use Doctrine\MongoDB\Database;
 /**
  * Auto-generated Migration: Please modify to your needs!
  */
-class Version20140822185744 extends AbstractMigration
+class Version20170214144800 extends AbstractMigration
 {
     /**
      * @return string
      */
     public function getDescription()
     {
-        return "Simple Migration Example created using a template";
+        return "";
     }
 
     public function up(Database $db)
@@ -26,7 +26,6 @@ class Version20140822185744 extends AbstractMigration
         $this->analyze($collection);
         $collection->ensureIndex(['pk' => ['cpf' => 1]]);
         $collection->insert(['name'=>'Giant Factory','age'=>25]);
-
     }
 
     public function down(Database $db)
@@ -37,6 +36,5 @@ class Version20140822185744 extends AbstractMigration
         $this->analyze($collection);
         $collection->deleteIndex(['pk' => ['cpf' => 1]]);
         $collection->remove(['name'=>'Giant Factory','age'=>25]);
-
     }
 }

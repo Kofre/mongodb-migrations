@@ -243,7 +243,6 @@ EOT
      */
     protected function getTemplateFile($templateFile)
     {
-        var_dump($templateFile); exit();
         if (empty($templateFile)) {
             return null;
         }

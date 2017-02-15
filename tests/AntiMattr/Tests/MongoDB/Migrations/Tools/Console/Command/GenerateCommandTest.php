@@ -6,6 +6,7 @@ use AntiMattr\MongoDB\Migrations\Configuration\Configuration;
 use AntiMattr\MongoDB\Migrations\Tools\Console\Command\GenerateCommand;
 use AntiMattr\TestCase\AntiMattrTestCase;
 use org\bovigo\vfs\vfsStream;
+use org\bovigo\vfs\vfsStreamDirectory;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -26,48 +27,6 @@ class GenerateCommandTest extends AntiMattrTestCase
         $this->config = $this->buildMock('AntiMattr\MongoDB\Migrations\Configuration\Configuration');
 
         $this->command->setMigrationConfiguration($this->config);
-    }
-
-    /**
-     * @expectedException InvalidArgumentException
-     */
-    public function testExecuteWithInvalidMigrationDirectory()
-    {
-        $migrationsNamespace = 'migrations-namespace';
-        $migrationsDirectory = 'missing-directory';
-
-        $root = vfsStream::setup('Base');
-
-        $input = new ArgvInput(
-            array(
-                GenerateCommand::NAME
-            )
-        );
-
-        // Expectations
-        $this->config->expects($this->once())
-            ->method('getMigrationsNamespace')
-            ->will(
-                $this->returnValue($migrationsNamespace)
-            )
-        ;
-        $this->config->expects($this->once())
-            ->method('getMigrationsDirectory')
-            ->will(
-                $this->returnValue(
-                    sprintf('%s/%s',
-                        vfsStream::url('Base'),
-                        $migrationsDirectory
-                    )
-                )
-            )
-        ;
-
-        // Run command, run.
-        $this->command->run(
-            $input,
-            $this->output
-        );
     }
 
     public function testExecute()
@@ -117,19 +76,58 @@ class GenerateCommandTest extends AntiMattrTestCase
             $migrationsDirectory,
             $versionString
         );
-        //        var_dump(file_get_contents($root->getChild($filename))); exit;
-        var_dump(($root->getChild($filename)->getContent())); exit;
         $this->assertTrue($root->hasChild($filename));
+    }
+
+    /**
+     * @expectedException InvalidArgumentException
+     */
+    public function testExecuteWithInvalidMigrationDirectory()
+    {
+        $migrationsNamespace = 'migrations-namespace';
+        $migrationsDirectory = 'missing-directory';
+
+        $root = vfsStream::setup('Base');
+
+        $input = new ArgvInput(
+            array(
+                GenerateCommand::NAME
+            )
+        );
+
+        // Expectations
+        $this->config->expects($this->once())
+            ->method('getMigrationsNamespace')
+            ->will(
+                $this->returnValue($migrationsNamespace)
+            )
+        ;
+        $this->config->expects($this->once())
+            ->method('getMigrationsDirectory')
+            ->will(
+                $this->returnValue(
+                    sprintf('%s/%s',
+                        vfsStream::url('Base'),
+                        $migrationsDirectory
+                    )
+                )
+            )
+        ;
+
+        // Run command, run.
+        $this->command->run(
+            $input,
+            $this->output
+        );
     }
 
     public function testExecuteBasedInMigrationTemplate()
     {
-        $migrationsNamespace = 'migrations-namespace';
+        $migrationsNamespace = 'Example\Migrations\TestAntiMattr\MongoDB';
         $migrationsDirectory = 'Base/Migrations';
-        $versionString = '1234567890';
+        $versionString = '20170214144800';
 
         $this->command->setVersionString($versionString);
-
         $root = vfsStream::setup(
             'Base', // rootDir
             null,   // permissions
@@ -138,18 +136,13 @@ class GenerateCommandTest extends AntiMattrTestCase
             )
         );
 
-
         $input = new ArgvInput(
             array(
                 GenerateCommand::NAME,
-                "--up-template={$this->command->getUp()}",
-                "--down-template={$this->command->getDown()}"
+                "--up-template=".__DIR__."/../../../Resources/fixtures/simpleUp",
+                "--down-template=".__DIR__."/../../../Resources/fixtures/simpleDown"
             )
-//                "down-template:{$this->command->getDown()}"]
         );
-//        $input->setOption('up-template',$this->command->getUp());
-//        $input->setOption('down-template',$this->command->getDown());
-//        var_dump($input); exit();
 
         // Expectations
         $this->config->expects($this->once())
@@ -165,7 +158,6 @@ class GenerateCommandTest extends AntiMattrTestCase
             )
         ;
 
-                        var_dump($root); exit();
         $this->command->run(
             $input,
             $this->output
@@ -177,33 +169,17 @@ class GenerateCommandTest extends AntiMattrTestCase
             $migrationsDirectory,
             $versionString
         );
-        //        var_dump(file_get_contents($root->getChild($filename))); exit;
-        var_dump(($root->getChild($filename)->getContent())); exit;
         $this->assertTrue($root->hasChild($filename));
+        $this->assertEquals(
+            file_get_contents(__DIR__ . "/../../../Resources/Migrations/Version20170214144800.php"),
+            $root->getChild($filename)->getContent()
+        );
     }
 }
 
 class GenerateCommandStub extends GenerateCommand
 {
     protected $version;
-    protected $up;
-
-    /**
-     * @return mixed
-     */
-    public function getUp()
-    {
-        return "Resources/fixtures/SimpleUp";
-    }
-    protected $down;
-
-    /**
-     * @return mixed
-     */
-    public function getDown()
-    {
-        return "Resources/fixtures/SimpleDown";
-    }
 
     public function getPrivateTemplate()
     {
@@ -219,6 +195,4 @@ class GenerateCommandStub extends GenerateCommand
     {
         return $this->version;
     }
-
-
 }
